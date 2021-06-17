@@ -29,6 +29,19 @@ public class MyTCPServer {
 					message = in.readLine();
 					out.println("@received: " + message + " @from: " + client.getInetAddress().toString() + " @port: " + client.getLocalPort());
 					
+					createTokenFolder(message);
+					
+					//if(!clearStatsFile(message, "temps")) {
+						addStatsToFile(message, "temps");
+					//}
+					
+					//if(!clearStatsFile(message, "power")) {
+						addStatsToFile(message, "power");
+					//}
+					
+					//if(!clearStatsFile(message, "fans")) {
+						addStatsToFile(message, "fans");
+					//}
 				} catch (IOException e) {
 					e.printStackTrace();
 				} finally {
@@ -45,29 +58,54 @@ public class MyTCPServer {
 		}
 	}
 	
-	private void addToFile(String message) {
-		File dir;
-		PrintWriter writer;
-		String token = message.split("token=")[1].split(",")[0];
-		
-		dir = new File("./database/" + token);
+	private void createTokenFolder(String message) {
+		File dir = new File("./database/" + message.split("token=")[1].split(",")[0]);
 		
 		if (!dir.exists()){
 		    dir.mkdirs();
 		}
+	}
+	
+	private boolean addStatsToFile(String message, String stats) {
+		PrintWriter writer;
+		String token = message.split("token=")[1].split(",")[0], data;
+		
+		if(message.split(stats + ":").length < 2) {
+			return false;
+		}
+		
+		data = message.split(stats + ":")[1].split(";")[0];
 		
 		try {
-			writer = new PrintWriter("./database/" + token + "/temperatures.txt", "UTF-8");
-			writer.println("The first line");
-			writer.println("The second line");
+			writer = new PrintWriter("./database/" + token + "/" + stats + ".txt", "UTF-8");
+			writer.println(data);
 			writer.close();
+			
+			return true;
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
+		return false;
+	}
+	
+	private boolean clearStatsFile(String message, String stats) {
+		File file;
+		String token;
+		
+		if(message.split(stats + ":").length < 2) {
+			token = message.split("token=")[1].split(",")[0];
+			file = new File("./database/" + token + "/" + stats + ".txt");
+			
+			if(file.exists()) {
+				file.delete();
+			}
+			
+			return true;
+		}
+				
+		return false;
 	}
 }
