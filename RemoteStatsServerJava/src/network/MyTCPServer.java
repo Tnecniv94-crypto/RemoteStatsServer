@@ -9,6 +9,8 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class MyTCPServer {
 	public void tcpServer() {
@@ -17,6 +19,7 @@ public class MyTCPServer {
 		PrintWriter out;
 		BufferedReader in;
 		String message;
+		int messageSwitch;
 
 		try {
 			server = new ServerSocket(Constants.port);
@@ -27,35 +30,85 @@ public class MyTCPServer {
 					out = new PrintWriter(client.getOutputStream(), true);
 					in = new BufferedReader(new InputStreamReader(client.getInputStream()));
 					message = in.readLine();
+					
+					System.out.println("received: " + message + " from: " + client.getInetAddress().toString() + " port: " + client.getLocalPort());
 					out.println("@received: " + message + " @from: " + client.getInetAddress().toString() + " @port: " + client.getLocalPort());
 					
-					createTokenFolder(message);
+					messageSwitch = switchMessage(message);
 					
-					//if(!clearStatsFile(message, "temps")) {
+					if(messageSwitch == 1) {
+						createTokenFolder(message);
 						addStatsToFile(message, "temps");
-					//}
-					
-					//if(!clearStatsFile(message, "power")) {
+					}
+					else if(messageSwitch == 2) {
+						createTokenFolder(message);
 						addStatsToFile(message, "power");
-					//}
-					
-					//if(!clearStatsFile(message, "fans")) {
-						addStatsToFile(message, "fans");
-					//}
+					}
+					else if(messageSwitch == 3) {
+						createTokenFolder(message);
+						addStatsToFile(message, "power");
+					}
+					else if(messageSwitch == -1) {
+						clearStatsFile(message, "temps");
+					}
+					else if(messageSwitch == -2) {
+						clearStatsFile(message, "power");
+					}
+					else if(messageSwitch == -3) {
+						clearStatsFile(message, "fans");
+					}
+					else if(messageSwitch == -10) {
+						clearStatsFolder(message);
+					}
+					else {
+						System.out.println("Can't read message.");
+					}
 				} catch (IOException e) {
 					e.printStackTrace();
 				} finally {
 					if(client != null) {
-						try {
-							client.close();
-						} catch (IOException e) {
-						}
+						client.close();
 					}
 				}
 			}
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
+	}
+	
+	/**
+	 * switches the message to check which operation to perform
+	 * @param message
+	 * @return 0: remove stats file, 1: update stats data
+	 */
+	private int switchMessage(String message) {
+		if(message.contains("remove")) {
+			if(message.contains("temps")) {
+				return -1;
+			}
+			else if(message.contains("power")) {
+				return -2;
+			}
+			else if(message.contains("fans")) {
+				return -3;
+			}
+			else if(message.contains("token_folder")) {
+				return -10;
+			}
+		}
+		else if(message.contains("update")){
+			if(message.contains("temps")) {
+				return 1;
+			}
+			else if(message.contains("power")) {
+				return 2;
+			}
+			else if(message.contains("fans")) {
+				return 3;
+			}
+		}
+		
+		return 0;
 	}
 	
 	private void createTokenFolder(String message) {
@@ -88,6 +141,24 @@ public class MyTCPServer {
 			e.printStackTrace();
 		}
 		
+		return false;
+	}
+	
+	private boolean clearStatsFolder(String message) {
+		File file;
+		String token;
+		
+		if(message.split("token=").length > 1) {
+			token = message.split("token=")[1].split(",")[0];
+			file = new File("./database/" + token + "/");
+			
+			if(file.exists()) {
+				file.delete();
+			}
+			
+			return true;
+		}
+				
 		return false;
 	}
 	
