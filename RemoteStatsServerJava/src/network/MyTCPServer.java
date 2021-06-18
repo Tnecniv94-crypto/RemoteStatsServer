@@ -9,64 +9,67 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import database.Database;
 
 public class MyTCPServer {
+	public MyTCPServer() {
+		
+	}
+
 	public void tcpServer() {
+		Database database = new Database();
 		ServerSocket server;
 		Socket client = null;
 		PrintWriter out;
 		BufferedReader in;
 		String message;
 		int messageSwitch;
+		
+		database.dropDatabase("Stats");
+		database.createDatabase("Stats");
+		database.createGpuTable("Stats", "GPUStats");
 
 		try {
 			server = new ServerSocket(Constants.port);
-			
+
 			while (true) {
-				try {					
+				try {
 					client = server.accept();
 					out = new PrintWriter(client.getOutputStream(), true);
 					in = new BufferedReader(new InputStreamReader(client.getInputStream()));
 					message = in.readLine();
-					
-					System.out.println("received: " + message + " from: " + client.getInetAddress().toString() + " port: " + client.getLocalPort());
-					out.println("@received: " + message + " @from: " + client.getInetAddress().toString() + " @port: " + client.getLocalPort());
-					
+
+					System.out.println("received: " + message + " from: " + client.getInetAddress().toString()
+							+ " port: " + client.getLocalPort());
+					out.println("@received: " + message + " @from: " + client.getInetAddress().toString() + " @port: "
+							+ client.getLocalPort());
+
 					messageSwitch = switchMessage(message);
-					
-					if(messageSwitch == 1) {
+
+					if (messageSwitch == 1) {
 						createTokenFolder(message);
 						addStatsToFile(message, "temps");
-					}
-					else if(messageSwitch == 2) {
+					} else if (messageSwitch == 2) {
 						createTokenFolder(message);
 						addStatsToFile(message, "power");
-					}
-					else if(messageSwitch == 3) {
+					} else if (messageSwitch == 3) {
 						createTokenFolder(message);
-						addStatsToFile(message, "power");
-					}
-					else if(messageSwitch == -1) {
+						addStatsToFile(message, "fans");
+					} else if (messageSwitch == -1) {
 						clearStatsFile(message, "temps");
-					}
-					else if(messageSwitch == -2) {
+					} else if (messageSwitch == -2) {
 						clearStatsFile(message, "power");
-					}
-					else if(messageSwitch == -3) {
+					} else if (messageSwitch == -3) {
 						clearStatsFile(message, "fans");
-					}
-					else if(messageSwitch == -10) {
+					} else if (messageSwitch == -10) {
 						clearStatsFolder(message);
-					}
-					else {
+					} else {
 						System.out.println("Can't read message.");
 					}
 				} catch (IOException e) {
 					e.printStackTrace();
 				} finally {
-					if(client != null) {
+					if (client != null) {
 						client.close();
 					}
 				}
@@ -75,108 +78,107 @@ public class MyTCPServer {
 			e1.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * switches the message to check which operation to perform
+	 * 
 	 * @param message
 	 * @return 0: remove stats file, 1: update stats data
 	 */
 	private int switchMessage(String message) {
-		if(message.contains("remove")) {
-			if(message.contains("temps")) {
+		if (message.contains("remove")) {
+			if (message.contains("temps")) {
 				return -1;
-			}
-			else if(message.contains("power")) {
+			} else if (message.contains("power")) {
 				return -2;
-			}
-			else if(message.contains("fans")) {
+			} else if (message.contains("fans")) {
 				return -3;
-			}
-			else if(message.contains("token_folder")) {
+			} else if (message.contains("token_folder")) {
 				return -10;
 			}
-		}
-		else if(message.contains("update")){
-			if(message.contains("temps")) {
+		} else if (message.contains("update")) {
+			if (message.contains("temps")) {
 				return 1;
-			}
-			else if(message.contains("power")) {
+			} else if (message.contains("power")) {
 				return 2;
-			}
-			else if(message.contains("fans")) {
+			} else if (message.contains("fans")) {
 				return 3;
 			}
 		}
-		
+
 		return 0;
 	}
 	
+	/*
+	 * Database as folder directory
+	 */
+
 	private void createTokenFolder(String message) {
 		File dir = new File("./database/" + message.split("token=")[1].split(",")[0]);
-		
-		if (!dir.exists()){
-		    dir.mkdirs();
+
+		if (!dir.exists()) {
+			dir.mkdirs();
 		}
 	}
-	
+
 	private boolean addStatsToFile(String message, String stats) {
 		PrintWriter writer;
 		String token = message.split("token=")[1].split(",")[0], data;
-		
-		if(message.split(stats + ":").length < 2) {
+
+		if (message.split(stats + ":").length < 2) {
 			return false;
 		}
-		
+
 		data = message.split(stats + ":")[1].split(";")[0];
-		
+
 		try {
 			writer = new PrintWriter("./database/" + token + "/" + stats + ".txt", "UTF-8");
 			writer.println(data);
 			writer.close();
-			
+
 			return true;
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}
-		
+
 		return false;
 	}
-	
+
 	private boolean clearStatsFolder(String message) {
 		File file;
 		String token;
-		
-		if(message.split("token=").length > 1) {
+
+		if (message.split("token=").length > 1) {
 			token = message.split("token=")[1].split(",")[0];
 			file = new File("./database/" + token + "/");
-			
-			if(file.exists()) {
+
+			if (file.exists()) {
 				file.delete();
 			}
-			
+
 			return true;
 		}
-				
+
 		return false;
 	}
-	
+
 	private boolean clearStatsFile(String message, String stats) {
 		File file;
 		String token;
-		
-		if(message.split(stats + ":").length < 2) {
+
+		if (message.split(stats + ":").length < 2) {
 			token = message.split("token=")[1].split(",")[0];
 			file = new File("./database/" + token + "/" + stats + ".txt");
-			
-			if(file.exists()) {
+
+			if (file.exists()) {
 				file.delete();
 			}
-			
+
 			return true;
 		}
-				
+
 		return false;
 	}
 }
