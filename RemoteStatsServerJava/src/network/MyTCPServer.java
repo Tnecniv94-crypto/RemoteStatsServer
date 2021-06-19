@@ -52,26 +52,17 @@ public class MyTCPServer {
 					messageSwitch = switchMessage(message);
 
 					if (messageSwitch == 1) {
-						/*
-						 * createTokenFolder(message); addStatsToFile(message, "temps");
-						 */
 						addStatsToDatabase(message, "temps");
 					} else if (messageSwitch == 2) {
-						/*
-						 * createTokenFolder(message); addStatsToFile(message, "power");
-						 */
 						addStatsToDatabase(message, "power");
 					} else if (messageSwitch == 3) {
-						/*
-						 * createTokenFolder(message); addStatsToFile(message, "fans");
-						 */
 						addStatsToDatabase(message, "fans");
 					} else if (messageSwitch == -1) {
-						// clearStatsFile(message, "temps");
+						deleteStatsFromDatabase(message, "temps");
 					} else if (messageSwitch == -2) {
-						// clearStatsFile(message, "power");
+						deleteStatsFromDatabase(message, "power");
 					} else if (messageSwitch == -3) {
-						// clearStatsFile(message, "fans");
+						deleteStatsFromDatabase(message, "fans");
 					} else if (messageSwitch == -10) {
 						// clearStatsFolder(message);
 					} else {
@@ -129,8 +120,8 @@ public class MyTCPServer {
 	private boolean addStatsToDatabase(String message, String stats) {
 		String token = message.split("token=")[1].split(",")[0], gpuIds, gpuNames, data, timestamp;
 
-		if (!message.contains("update " + stats)) {
-			System.out.println("Message doesn't contain \"update " + stats + "\" command.");
+		if (!message.contains("update _" + stats)) {
+			System.out.println("Message doesn't contain \"update _" + stats + "\" command.");
 
 			return false;
 		}
@@ -160,9 +151,43 @@ public class MyTCPServer {
 
 		timestamp = message.split("time=")[1].split(";")[0];
 
-		database.insertIntoGPUStats("Stats", token, stats, gpuIds, gpuNames, data, timestamp);
+		database.updateGPUStats("Stats", token, stats, gpuIds, gpuNames, data, timestamp);
 
 		return false;
+	}
+	
+	private boolean deleteStatsFromDatabase(String message, String stats) {
+		String token = message.split("token=")[1].split(",")[0];
+
+		if (!message.contains("remove _" + stats)) {
+			System.out.println("Message doesn't contain \"remove _" + stats + "\" command.");
+
+			return false;
+		}
+
+		switch (stats) {
+		case "temps": {
+			database.deleteGPUStats("Stats", token, stats);
+			break;
+		}
+		case "power": {
+			database.deleteGPUStats("Stats", token, stats);
+			break;
+		}
+		case "fans": {
+			database.deleteGPUStats("Stats", token, stats);
+			break;
+		}
+		default: {
+			System.out.println("Unknown param stats for data: " + stats);
+
+			return false;
+		}
+		}
+
+		database.deleteGPUStats("Stats", token, stats);
+
+		return true;
 	}
 
 	/*

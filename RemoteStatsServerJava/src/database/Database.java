@@ -41,9 +41,14 @@ public class Database {
 		
 		try {
 			stmt.executeQuery(sql1);
-			stmt.executeUpdate(sql2);
-			System.out.println(
-					"Updated statement " + sql2 + " in GPUStats in database " + databaseName + " successfully.");
+			if (stmt.executeUpdate(sql2) == 0) {
+				insertIntoGPUStats(databaseName, token, statsType, gpuIds, gpuNames, gpuStats, timestamp);
+				System.out.println("Inserted statement " + sql2 + " in GPUStats in database " + databaseName + " successfully.");
+			}
+			else {
+				System.out.println("Updated statement " + sql2 + " in GPUStats in database " + databaseName + " successfully.");
+			}
+			
 		} catch (SQLException e) {
 			System.out.println("Error in query \"" + sql1 + "\" or \"" + sql2 + "\"");
 			e.printStackTrace();
@@ -61,6 +66,21 @@ public class Database {
 			stmt.executeUpdate(sql2);
 			System.out.println(
 					"Inserted statement " + sql2 + " into GPUStats in database " + databaseName + " successfully.");
+		} catch (SQLException e) {
+			System.out.println("Error in query \"" + sql1 + "\" or \"" + sql2 + "\"");
+			e.printStackTrace();
+		}
+	}
+	
+	public void deleteGPUStats(String databaseName, String token, String statsType) {
+		String sql1 = "USE " + databaseName + ";";
+		String sql2 = "DELETE FROM GPUStats "
+					+ "WHERE token = '" + token + "' AND statsType = '" + statsType + "'; ";
+		
+		try {
+			stmt.executeQuery(sql1);
+			stmt.executeUpdate(sql2);
+			System.out.println("Deleted statement " + sql2 + " in GPUStats in database " + databaseName + " successfully.");
 		} catch (SQLException e) {
 			System.out.println("Error in query \"" + sql1 + "\" or \"" + sql2 + "\"");
 			e.printStackTrace();
