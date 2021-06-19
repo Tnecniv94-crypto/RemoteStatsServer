@@ -30,8 +30,8 @@ public class MyTCPServer {
 		database.createDatabase("Stats");
 		database.createGpuTable("Stats", "GPUStats");
 		database.clearTable("Stats", "GPUStats");
-		database.insertIntoGPUStats("Stats", "test", "testType", "1,2", "NVIDIA RTX 3060 12GB, NVIDIA RTX 3070", "60, 50",
-				"2000-01-01 00:00:00");
+		//database.insertIntoGPUStats("Stats", "test", "testType", "1,2", "NVIDIA RTX 3060 12GB, NVIDIA RTX 3070", "60, 50",
+		//		"2000-01-01 00:00:00");
 		database.printGPUStats();
 
 		try {
@@ -159,6 +159,7 @@ public class MyTCPServer {
 	private boolean deleteStatsFromDatabase(String message, String stats) {
 		String token = message.split("token=")[1].split(",")[0];
 
+		System.out.println(message);
 		if (!message.contains("remove _" + stats)) {
 			System.out.println("Message doesn't contain \"remove _" + stats + "\" command.");
 

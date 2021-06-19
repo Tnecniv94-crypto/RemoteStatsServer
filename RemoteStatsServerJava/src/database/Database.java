@@ -219,8 +219,6 @@ public class Database {
 			rsmd = rs.getMetaData();
 			columns = rsmd.getColumnCount();
 
-			System.out.println("colums number: " + columns);
-
 			while (rs.next()) {
 				for (int i = 1; i < columns; i++) {
 					System.out.print("'" + rs.getString(i) + "'; ");
