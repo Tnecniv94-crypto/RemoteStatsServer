@@ -12,22 +12,27 @@ import java.net.Socket;
 import database.Database;
 
 public class MyTCPServer {
+	private Database database = new Database();
+
 	public MyTCPServer() {
-		
+
 	}
 
 	public void tcpServer() {
-		Database database = new Database();
 		ServerSocket server;
 		Socket client = null;
 		PrintWriter out;
 		BufferedReader in;
 		String message;
 		int messageSwitch;
-		
+
 		database.dropDatabase("Stats");
 		database.createDatabase("Stats");
 		database.createGpuTable("Stats", "GPUStats");
+		database.clearTable("Stats", "GPUStats");
+		database.insertIntoGPUStats("Stats", "test", "testType", "1,2", "NVIDIA RTX 3060 12GB, NVIDIA RTX 3070", "60, 50",
+				"2000-01-01 00:00:00");
+		database.printGPUStats();
 
 		try {
 			server = new ServerSocket(Constants.port);
@@ -47,22 +52,28 @@ public class MyTCPServer {
 					messageSwitch = switchMessage(message);
 
 					if (messageSwitch == 1) {
-						createTokenFolder(message);
-						addStatsToFile(message, "temps");
+						/*
+						 * createTokenFolder(message); addStatsToFile(message, "temps");
+						 */
+						addStatsToDatabase(message, "temps");
 					} else if (messageSwitch == 2) {
-						createTokenFolder(message);
-						addStatsToFile(message, "power");
+						/*
+						 * createTokenFolder(message); addStatsToFile(message, "power");
+						 */
+						addStatsToDatabase(message, "power");
 					} else if (messageSwitch == 3) {
-						createTokenFolder(message);
-						addStatsToFile(message, "fans");
+						/*
+						 * createTokenFolder(message); addStatsToFile(message, "fans");
+						 */
+						addStatsToDatabase(message, "fans");
 					} else if (messageSwitch == -1) {
-						clearStatsFile(message, "temps");
+						// clearStatsFile(message, "temps");
 					} else if (messageSwitch == -2) {
-						clearStatsFile(message, "power");
+						// clearStatsFile(message, "power");
 					} else if (messageSwitch == -3) {
-						clearStatsFile(message, "fans");
+						// clearStatsFile(message, "fans");
 					} else if (messageSwitch == -10) {
-						clearStatsFolder(message);
+						// clearStatsFolder(message);
 					} else {
 						System.out.println("Can't read message.");
 					}
@@ -73,6 +84,8 @@ public class MyTCPServer {
 						client.close();
 					}
 				}
+
+				database.printGPUStats();
 			}
 		} catch (IOException e1) {
 			e1.printStackTrace();
@@ -87,28 +100,71 @@ public class MyTCPServer {
 	 */
 	private int switchMessage(String message) {
 		if (message.contains("remove")) {
-			if (message.contains("temps")) {
+			if (message.contains("_temps")) {
 				return -1;
-			} else if (message.contains("power")) {
+			} else if (message.contains("_power")) {
 				return -2;
-			} else if (message.contains("fans")) {
+			} else if (message.contains("_fans")) {
 				return -3;
-			} else if (message.contains("token_folder")) {
+			} else if (message.contains("_token_entry")) {
 				return -10;
 			}
 		} else if (message.contains("update")) {
-			if (message.contains("temps")) {
+			if (message.contains("_temps")) {
 				return 1;
-			} else if (message.contains("power")) {
+			} else if (message.contains("_power")) {
 				return 2;
-			} else if (message.contains("fans")) {
+			} else if (message.contains("_fans")) {
 				return 3;
 			}
 		}
 
 		return 0;
 	}
-	
+
+	/*
+	 * MySQL as Database
+	 */
+
+	private boolean addStatsToDatabase(String message, String stats) {
+		String token = message.split("token=")[1].split(",")[0], gpuIds, gpuNames, data, timestamp;
+
+		if (!message.contains("update " + stats)) {
+			System.out.println("Message doesn't contain \"update " + stats + "\" command.");
+
+			return false;
+		}
+
+		gpuIds = message.split("ids: ")[1].split(";")[0];
+		gpuNames = message.split("names: ")[1].split(";")[0];
+
+		switch (stats) {
+		case "temps": {
+			data = message.split("temps: ")[1].split(";")[0];
+			break;
+		}
+		case "power": {
+			data = message.split("power: ")[1].split(";")[0];
+			break;
+		}
+		case "fans": {
+			data = message.split("fans: ")[1].split(";")[0];
+			break;
+		}
+		default: {
+			System.out.println("Unknown param stats for data: " + stats);
+
+			return false;
+		}
+		}
+
+		timestamp = message.split("time=")[1].split(";")[0];
+
+		database.insertIntoGPUStats("Stats", token, stats, gpuIds, gpuNames, data, timestamp);
+
+		return false;
+	}
+
 	/*
 	 * Database as folder directory
 	 */
