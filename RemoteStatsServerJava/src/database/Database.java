@@ -104,7 +104,7 @@ public class Database {
 		return false;
 	}
 
-	public void createGpuTable(String databaseName, String tableName) {
+	public void createTable(String databaseName, String tableName) {
 		String sql1 = "USE " + databaseName + ";";
 		String sql2 = "DROP TABLE IF EXISTS GPUStats;";
 		String sql3 = "CREATE TABLE IF NOT EXISTS " + tableName
@@ -121,8 +121,23 @@ public class Database {
 			e.printStackTrace();
 		}
 	}
+	
+	public void createIndexOnGPUStatsTable(String databaseName) {
+		String sql1 = "USE " + databaseName + ";";
+		String sql2 = "CREATE INDEX token_index "
+					+ "ON GPUStats (token);";
 
-	public void createGpuTableTemps(String databaseName, String tableName) {
+		try {
+			stmt.executeQuery(sql1);
+			stmt.executeUpdate(sql2);
+			System.out.println("Created index on column \"token\" in table GPUStats" + " in database " + databaseName + " successfully.");
+		} catch (SQLException e) {
+			System.out.println("Error in query \"" + sql1 + "\" or \"" + sql2 + "\" or \"" + sql2 + "\"");
+			e.printStackTrace();
+		}
+	}
+
+	/*public void createGpuTableTemps(String databaseName, String tableName) {
 		String sql1 = "USE " + databaseName + ";";
 		String sql2 = "DROP TABLE GPUStats;";
 		String sql3 = "CREATE TABLE IF NOT EXISTS " + tableName
@@ -171,7 +186,7 @@ public class Database {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-	}
+	}*/
 
 	public void clearTable(String databaseName, String tableName) {
 		String sql1 = "USE " + databaseName + ";";
@@ -183,7 +198,19 @@ public class Database {
 			System.out.println(
 					"Deleted all content form table " + tableName + " in database " + databaseName + " successfully.");
 		} catch (SQLException e) {
-			System.out.println("Erro in query \"" + sql2 + "\"");
+			System.out.println("Error in query \"" + sql2 + "\"");
+			e.printStackTrace();
+		}
+	}
+	
+	public void useDatabase(String databaseName) {
+		String sql = "USE " + databaseName + ";";
+		
+		try {
+			stmt.executeQuery(sql);
+			System.out.println("Using database \"" + databaseName + "\".");
+		} catch (SQLException e) {
+			System.out.println("Error in query \"" + sql + "\"");
 			e.printStackTrace();
 		}
 	}

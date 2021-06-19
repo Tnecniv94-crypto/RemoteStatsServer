@@ -26,10 +26,10 @@ public class MyTCPServer {
 		String message;
 		int messageSwitch;
 
-		database.dropDatabase("Stats");
-		database.createDatabase("Stats");
-		database.createGpuTable("Stats", "GPUStats");
-		database.clearTable("Stats", "GPUStats");
+		//database.createDatabase("Stats");
+		//database.createGpuTable("Stats", "GPUStats");
+		//database.createIndexOnGPUStatsTable("Stats");
+		//database.clearTable("Stats", "GPUStats");
 		/*database.insertIntoGPUStats("Stats", "test", "testType", "1,2", "NVIDIA RTX 3060 12GB, NVIDIA RTX 3070", "60, 50",
 				"2000-01-01 00:00:00");*/
 		database.printGPUStats();
@@ -81,6 +81,26 @@ public class MyTCPServer {
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
+	}
+	
+	public void createDatabase(String databaseName) {
+		database.createDatabase(databaseName);
+	}
+	
+	public void createGPUStatsTable(String databaseName) {
+		database.createTable(databaseName, "GPUStats");
+	}
+	
+	public void createIndexOnGPUStatsTable(String databaseName) {
+		database.createIndexOnGPUStatsTable(databaseName);
+	}
+	
+	public void dropDatabase(String databaseName) {
+		database.dropDatabase(databaseName);
+	}
+	
+	public void useDatabase(String databaseName) {
+		database.useDatabase(databaseName);
 	}
 
 	/**
